@@ -1,47 +1,52 @@
 import streamlit as st
+import google.generativeai as genai
 
-# 1. 페이지 설정
-st.set_page_config(page_title="Global Wanderer", page_icon="✈️", layout="centered")
+# 1. 페이지 설정 및 디자인
+st.set_page_config(page_title="Vibe Travel AI", page_icon="✈️")
 
-# 2. 디자인
 st.markdown("""
     <style>
-    .main { background-color: #ffffff; }
-    .stTitle { font-weight: 700; color: #1e293b; letter-spacing: -1px; }
-    .info-box { padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+    .stTitle { font-weight: 800; color: #0ea5e9; }
+    .travel-card { background-color: #f0f9ff; padding: 20px; border-radius: 15px; border: 1px solid #bae1ff; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("✈️ 어느 장소로 유명해?")
-st.write("궁금한 여행지를 입력하면 AI가 실시간으로 정보를 찾아드립니다.")
+# 2. AI 설정 (복사한 API 키를 아래 '여기에_키를_넣으세요' 자리에 따옴표와 함께 넣어주세요)
+API_KEY = "여기에_키를_넣으세요" 
+
+if API_KEY != "여기에_키를_넣으세요":
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel('gemini-pro')
+else:
+    st.warning("⚠️ 먼저 Google AI Studio에서 발급받은 API 키를 코드에 입력해주세요!")
+
+st.title("✈️ 어디가 유명해? AI 가이드")
+st.write("궁금한 도시나 나라를 입력하세요. AI가 숨은 맛집까지 상세히 알려드립니다.")
 
 # 3. 사용자 입력
-location = st.text_input("", placeholder="예: 오스트레일리아, 아이슬란드, 도쿄...")
+location = st.text_input("", placeholder="예: 오스트레일리아 시드니, 제주도 서귀포...")
 
-# 4. 실시간 정보 생성 로직 (Simulated AI Engine)
-if location:
-    st.divider()
-    
-    # 로딩 바이브를 주어 사용자에게 '찾고 있음'을 알립니다.
-    with st.spinner(f"✨ {location}에 대한 멋진 정보를 정리하고 있어요..."):
-        
-        # 💡 [핵심 변경 사항] 
-        # 이제 고정된 DB가 아니라, 입력값에 따라 문장을 조합하거나 
-        # 나중에 여기에 OpenAI 같은 실제 AI API를 연결할 수 있습니다.
-        
-        # 현재는 우선 어떤 입력에도 대응할 수 있는 '스마트 템플릿' 형식을 적용합니다.
-        st.subheader(f"📍 {location} 여행 가이드")
-        
-        col1, col2 = st.columns(2)
-        
-        # 실제 AI 연결 전까지는 예시를 풍성하게 보여주기 위해 
-        # 입력값(location)을 활용한 동적 가이드를 출력합니다.
-        with col1:
-            st.info(f"🏛️ **유명 관광지**\n\n{location}의 랜드마크와 숨겨진 명소들을 탐험해 보세요.")
-        with col2:
-            st.success(f"🍴 **현지 맛집/음식**\n\n{location}에서만 맛볼 수 있는 특별한 요리를 추천합니다.")
+if location and API_KEY != "여기에_키를_넣으세요":
+    with st.spinner(f"🔍 AI가 {location}의 구석구석을 살펴보고 있어요..."):
+        try:
+            # AI에게 구체적인 페르소나와 질문 던지기
+            prompt = f"""
+            너는 베테랑 여행 가이드야. '{location}'에 대해 다음 정보를 아주 구체적이고 세세하게 알려줘.
+            1. 꼭 가봐야 할 유명 관광지 3곳 (설명 포함)
+            2. 현지인들만 아는 진짜 맛집 2곳 (대표 메뉴 포함)
+            3. 그 지역의 현재 여행 바이브와 꿀팁
+            가독성 좋게 불렛포인트와 이모지를 섞어서 대답해줘.
+            """
+            response = model.generate_content(prompt)
             
-        st.write(f"🌈 *{location}은(는) 지금 당신을 기다리고 있어요!*")
-        st.balloons()
+            st.divider()
+            st.subheader(f"📍 {location} 여행 리포트")
+            
+            # AI의 답변 출력
+            st.markdown(response.text)
+            st.balloons()
+            
+        except Exception as e:
+            st.error(f"정보를 가져오는 중에 문제가 생겼어요: {e}")
 
-st.caption("Minimalist Travel Guide powered by Vibe Coding")
+st.caption("Real-time AI Travel Guide powered by Vibe Coding")
